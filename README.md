@@ -1,8 +1,18 @@
+[![npm version](https://img.shields.io/npm/v/map-scissor-swipe.svg?style=flat-square)](https://www.npmjs.com/package/map-scissor-swipe)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+
 # map-scissor-swipe
 
 A high-performance, zero-dependency swipe comparison control for **MapLibre GL JS** (≥ 3.0.0) and **Mapbox GL JS** (≥ 2.0.0).
 
 Unlike traditional two-map syncing libraries, `map-scissor-swipe` operates completely within a **single map instance** via hardware-accelerated WebGL scissor testing. This cuts memory overhead roughly in half, removes camera tracking lag, and guarantees pixel-perfect frame synchronization.
+
+## 🌐 Live Demos
+
+See the hardware-accelerated slider control in action across different mapping ecosystems:
+
+- 🗺️ [MapLibre GL JS Live Example](https://CatCodeDanix.github.io/map-scissor-swipe/demo/maplibre.html)
+- 🛰️ [Mapbox GL JS Live Example](https://CatCodeDanix.github.io/map-scissor-swipe/demo/mapbox.html)
 
 ## Features
 
