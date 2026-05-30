@@ -1,0 +1,69 @@
+{
+  "name": "map-scissor-swipe",
+  "version": "1.0.0",
+  "description": "Zero-dependency swipe comparison control for MapLibre GL JS and Mapbox GL JS using WebGL scissor testing on a single map instance.",
+  "author": "Danial Abdoli abdolidanial@gmail.com",
+  "license": "MIT",
+  "keywords": [
+    "maplibre",
+    "mapbox",
+    "map",
+    "swipe",
+    "compare",
+    "webgl",
+    "scissor",
+    "layer",
+    "satellite",
+    "before-after"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "mapbox-gl": ">=2.0.0",
+    "maplibre-gl": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "mapbox-gl": {
+      "optional": true
+    },
+    "maplibre-gl": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CatCodeDanix/map-scissor-swipe.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CatCodeDanix/map-scissor-swipe/issues"
+  },
+  "homepage": "https://github.com/CatCodeDanix/map-scissor-swipe#readme"
+}

@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MapScissorSwipe MapLibre Demo</title>
+
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link
+      href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: var(--font-family);
+        overflow: hidden;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      /* Floating Control Panel Base */
+      #control-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 320px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        padding: 20px;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+
+      /* Header Layout with Toggle Button */
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        user-select: none;
+        gap: 10px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #333;
+      }
+
+      .btn-toggle-panel {
+        background: #f0f0f2;
+        border: none;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        color: #555;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: background 0.2s;
+        justify-content: center;
+      }
+
+      .btn-toggle-panel:hover {
+        background: #e4e4e7;
+      }
+
+      .btn-toggle-panel .chevron {
+        display: inline-block;
+        transition: transform 0.3s;
+      }
+
+      /* Collapsed States */
+      #control-panel.collapsed {
+        width: 105px;
+        height: 28px;
+        padding: 12px 16px;
+        gap: 0;
+        overflow: hidden;
+      }
+
+      #control-panel.collapsed .panel-header {
+        border-bottom: 1px solid transparent;
+        padding-bottom: 0;
+        margin-bottom: 0;
+        width: 100%;
+      }
+
+      #control-panel.collapsed h1,
+      #control-panel.collapsed .control-group,
+      #control-panel.collapsed .control-row,
+      #control-panel.collapsed .actions {
+        display: none !important;
+      }
+
+      #control-panel.collapsed .btn-toggle-panel .chevron {
+        transform: rotate(180deg);
+      }
+
+      /* Forms and Rows formatting */
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .control-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      label {
+        font-size: 0.85rem;
+        color: #555;
+        font-weight: 600;
+      }
+
+      input[type="range"] {
+        width: 100%;
+      }
+      input[type="number"],
+      select {
+        width: 80px;
+        padding: 4px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      input[type="color"] {
+        width: 40px;
+        height: 24px;
+        padding: 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        flex: 1;
+        padding: 8px;
+        background: #007aff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #005bb5;
+      }
+      button.danger {
+        background: #ff3b30;
+      }
+      button.danger:hover {
+        background: #c52922;
+      }
+      button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      /* Custom Striped Class Selector */
+      .my-custom-swipe-bar {
+        background-image: repeating-linear-gradient(
+          45deg,
+          #ffcc00,
+          #ffcc00 10px,
+          #222 10px,
+          #222 20px
+        );
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <div id="control-panel">
+      <div class="panel-header" id="panel-header-toggle">
+        <h1>MapScissorSwipe</h1>
+        <button class="btn-toggle-panel" id="btn-minimize">
+          <span>Options</span><span class="chevron">▲</span>
+        </button>
+      </div>
+
+      <div class="control-group">
+        <label>Position</label>
+        <input
+          type="range"
+          id="ctrl-position"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.5"
+        />
+      </div>
+
+      <div class="control-row">
+        <label>Orientation</label>
+        <select id="ctrl-orientation">
+          <option value="vertical">Vertical</option>
+          <option value="horizontal">Horizontal</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <label>Bar Width (px)</label>
+        <input type="number" id="ctrl-width" min="0" max="50" value="4" />
+      </div>
+
+      <div class="control-row">
+        <label>Bar Color</label>
+        <input type="color" id="ctrl-color" value="#fc0356" />
+      </div>
+
+      <div class="control-row">
+        <label>Border Color</label>
+        <input type="color" id="ctrl-border-color" value="#000000" />
+      </div>
+
+      <div class="control-row">
+        <label>Border Width (px)</label>
+        <input
+          type="number"
+          id="ctrl-border-width"
+          min="0"
+          max="10"
+          value="1"
+        />
+      </div>
+
+      <div class="control-row">
+        <label>Show Icon Handle</label>
+        <input type="checkbox" id="ctrl-handle" checked />
+      </div>
+
+      <div class="control-row" style="margin-top: 5px">
+        <label title="Overrides color/border">Use Custom Class</label>
+        <input type="checkbox" id="ctrl-class" />
+      </div>
+
+      <div class="actions">
+        <button id="btn-destroy" class="danger">Destroy</button>
+        <button id="btn-create" disabled>Create</button>
+      </div>
+    </div>
+
+    <script type="module">
+      import { MapScissorSwipe } from "../dist/index.js";
+
+      // 1. Initialize MapLibre Map Canvas
+      const map = new maplibregl.Map({
+        container: "map",
+        style: {
+          version: 8,
+          sources: {},
+          layers: [],
+        },
+        center: [12.4924, 41.8902], // Colosseum, Rome
+        zoom: 16,
+      });
+
+      let swipeInstance = null;
+
+      // Sample Inline SVG Dynamic Handle
+      const svgHandle = `
+            <div style="background: white; border: 1px solid #333; border-radius: 4px; padding: 4px; display: flex; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+        `;
+
+      map.on("load", () => {
+        // 2. Add Vector/Raster Tile Sources
+        map.addSource("osm", {
+          type: "raster",
+          tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+          tileSize: 256,
+          attribution: "&copy; OpenStreetMap Contributors",
+        });
+
+        map.addSource("sat", {
+          type: "raster",
+          tiles: [
+            "https://api.maptiler.com/maps/satellite/256/{z}/{x}/{y}.jpg?key=gzIH8gDOfnJBzAYYLoiE",
+          ],
+          tileSize: 256,
+        });
+
+        // 3. Mount Underlying Layer Entities
+        map.addLayer({ id: "layer-left", type: "raster", source: "osm" });
+        map.addLayer({ id: "layer-right", type: "raster", source: "sat" });
+
+        // 4. Initialize Scissor Control Layout
+        initSwipe();
+      });
+
+      function getControlOptions() {
+        const useClass = document.getElementById("ctrl-class").checked;
+        const useHandle = document.getElementById("ctrl-handle").checked;
+
+        return {
+          orientation: document.getElementById("ctrl-orientation").value,
+          position: parseFloat(document.getElementById("ctrl-position").value),
+          swipeBar: {
+            width: parseInt(document.getElementById("ctrl-width").value, 10),
+            color: document.getElementById("ctrl-color").value,
+            borderColor: document.getElementById("ctrl-border-color").value,
+            borderWidth: parseInt(
+              document.getElementById("ctrl-border-width").value,
+              10,
+            ),
+            className: useClass ? "my-custom-swipe-bar" : "",
+            handle: useHandle ? svgHandle : null,
+            handleStyle: {
+              color: document.getElementById("ctrl-color").value,
+            },
+          },
+        };
+      }
+
+      function initSwipe() {
+        if (swipeInstance) return;
+
+        const opts = getControlOptions();
+
+        swipeInstance = new MapScissorSwipe(map, {
+          leftLayers: ["layer-left"],
+          rightLayers: ["layer-right"],
+          ...opts,
+        });
+
+        document.getElementById("btn-destroy").disabled = false;
+        document.getElementById("btn-create").disabled = true;
+      }
+
+      function triggerUpdate() {
+        if (!swipeInstance) return;
+        const opts = getControlOptions();
+        swipeInstance.update(opts);
+      }
+
+      // Panel Collapse Functionality
+      const panel = document.getElementById("control-panel");
+      document
+        .getElementById("panel-header-toggle")
+        .addEventListener("click", () => {
+          panel.classList.toggle("collapsed");
+        });
+
+      // Map Configuration DOM Subscriptions
+      const inputs = [
+        "ctrl-orientation",
+        "ctrl-width",
+        "ctrl-color",
+        "ctrl-border-color",
+        "ctrl-border-width",
+        "ctrl-handle",
+        "ctrl-class",
+      ];
+
+      inputs.forEach((id) => {
+        document.getElementById(id).addEventListener("change", triggerUpdate);
+        if (
+          document.getElementById(id).type === "color" ||
+          document.getElementById(id).type === "number"
+        ) {
+          document.getElementById(id).addEventListener("input", triggerUpdate);
+        }
+      });
+
+      document
+        .getElementById("ctrl-position")
+        .addEventListener("input", (e) => {
+          if (swipeInstance) {
+            swipeInstance.setPosition(parseFloat(e.target.value));
+          }
+        });
+
+      // Cleanup & Remount Listeners
+      document.getElementById("btn-destroy").addEventListener("click", () => {
+        if (swipeInstance) {
+          swipeInstance.destroy();
+          swipeInstance = null;
+          document.getElementById("btn-destroy").disabled = true;
+          document.getElementById("btn-create").disabled = false;
+        }
+      });
+
+      document
+        .getElementById("btn-create")
+        .addEventListener("click", initSwipe);
+    </script>
+  </body>
+</html>
